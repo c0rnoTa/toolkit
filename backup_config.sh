@@ -51,7 +51,7 @@ BTEMPDIR=/tmp/$BDATEFORMAT
 mkdir -p $BTEMPDIR
 cd $BTEMPDIR
 
-if [ "$BPATHS" -ne "" ]; then
+if [[ "$BPATHS" -ne "" ]]; then
     # Дамп директорий
     i=1
     for CURRDIR in $BPATHS; do
@@ -62,7 +62,7 @@ if [ "$BPATHS" -ne "" ]; then
     done
 fi
 
-if [ "$BFILES" -ne "" ]; then
+if [[ "$BFILES" -ne "" ]]; then
     # Дамп файлов
     i=1
     for CURRFILE in $BFILES; do
@@ -88,9 +88,9 @@ fi
 
 # Дамп базы данных PostgreSQL, если установлен pg_dump и указано имя базы
 PSQLDUMPBIN=`whereis pg_dump | awk '{print $2}'`
-if [ ! -f $PSQLDUMPBIN ]; then
+if [ -f $PSQLDUMPBIN ]; then
     echo `date` 'Обнаружен pg_dump. Сохраняем базы данных.'
-    if [ "$BPSQLDATABASE" -ne "" ]; then
+    if [[ "$BPSQLDATABASE" -ne "" ]]; then
         for DATABASE in $BPSQLDATABASE; do
             echo `date` 'Делаю дамп базы' $DATABASE
             sudo -u postgres $PSQLDUMPBIN -f $BTEMPDIR/$BSERVERNAME-$DATABASE-$BDATEFORMAT.sql $DATABASE
@@ -112,25 +112,29 @@ if [ -f $BSERVERNAME-$BDATEFORMAT.tar.gz ]; then
 fi
 
 # Сохраняем архив на ресурсе SAMBA
-BSAMBASHARE="//$BSAMBAHOST/$BSAMBAUSER"
-echo `date` 'Сохраняю' $BSERVERNAME-$BDATEFORMAT.tar.gz 'на' $BSAMBASHARE
-if [ "$BSAMBAUSER" = "" ]; then
-	BSAMBAUSER='Guest'
-fi
-if [ "$BSAMBAPASS" = "" ]; then
-	BSAMBAUSER="$BSAMBAUSER --no-pass"
-fi
-# Вынесено без ТАБов. Копирование на внешний ресурс
+if [[ "$BSAMBAHOST" -ne "" ]]; then
+    BSAMBASHARE="//$BSAMBAHOST/$BSAMBAUSER"
+    echo `date` 'Сохраняю' $BSERVERNAME-$BDATEFORMAT.tar.gz 'на' $BSAMBASHARE
+    if [ "$BSAMBAUSER" = "" ]; then
+        BSAMBAUSER='Guest'
+    fi
+    if [ "$BSAMBAPASS" = "" ]; then
+        BSAMBAUSER="$BSAMBAUSER --no-pass"
+    fi
+    # Вынесено без ТАБов. Копирование на внешний ресурс
 smbclient $BSAMBASHARE --timeout=60 -U $BSAMBAUSER $BSAMBAPASS<<EOC
 put $BSERVERNAME-$BDATEFORMAT.tar.gz
 EOC
-# Конец копирования на SAMBA
+    # Конец копирования на SAMBA
 
-# Удаляю локальный файл бэкапа
-if [ -f $BSERVERNAME-$BDATEFORMAT.tar.gz ]; then
-  echo `date` 'Удаляю локальный файл бэкапа'
-  rm /tmp/$BSERVERNAME-$BDATEFORMAT.tar.gz
+    # Удаляю локальный файл бэкапа
+    if [ -f $BSERVERNAME-$BDATEFORMAT.tar.gz ]; then
+      echo `date` 'Удаляю локальный файл бэкапа'
+      rm /tmp/$BSERVERNAME-$BDATEFORMAT.tar.gz
+    fi
 fi
+
+
 
 echo `date` 'Работа завершена'
 
