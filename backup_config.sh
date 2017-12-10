@@ -56,7 +56,7 @@ BTEMPDIR=/tmp/$BDATEFORMAT
 mkdir -p $BTEMPDIR
 cd $BTEMPDIR
 
-if [[ "$BPATHS" -ne "" ]]; then
+if [ ! -z "$BPATHS" ]; then
     # Дамп директорий
     i=1
     for CURRDIR in $BPATHS; do
@@ -67,7 +67,7 @@ if [[ "$BPATHS" -ne "" ]]; then
     done
 fi
 
-if [[ "$BFILES" -ne "" ]]; then
+if [ ! -z "$BFILES" ]; then
     # Дамп файлов
     i=1
     for CURRFILE in $BFILES; do
@@ -95,7 +95,7 @@ fi
 PSQLDUMPBIN=`whereis pg_dump | awk '{print $2}'`
 if [ -f $PSQLDUMPBIN ]; then
     echo `date` 'Обнаружен pg_dump. Сохраняем базы данных.'
-    if [[ "$BPSQLDATABASE" -ne "" ]]; then
+    if [ ! -z "$BPSQLDATABASE" ]; then
         for DATABASE in $BPSQLDATABASE; do
             echo `date` 'Делаю дамп базы' $DATABASE
             sudo -u postgres $PSQLDUMPBIN -f $BTEMPDIR/$BSERVERNAME-$DATABASE-$BDATEFORMAT.sql $DATABASE
@@ -117,7 +117,7 @@ if [ -f $BSERVERNAME-$BDATEFORMAT.tar.gz ]; then
 fi
 
 # Сохраняем архив на ресурсе SAMBA
-if [[ "$BSAMBAHOST" -ne "" ]]; then
+if [ ! -z "$BSAMBAHOST" ]; then
     BSAMBASHARE="//$BSAMBAHOST/$BSAMBAUSER"
     echo `date` 'Сохраняю' $BSERVERNAME-$BDATEFORMAT.tar.gz 'на' $BSAMBASHARE
     if [ "$BSAMBAUSER" = "" ]; then
@@ -142,9 +142,9 @@ fi
 # Отправляем нотификацию о выполненной работе
 SENDEMAILBIN=`whereis sendEmail | awk '{print $2}'`
 if [ -f $SENDEMAILBIN ]; then
-    if [[ "$NOTIFYMAIL" -ne "" ]]; then
-        if [[ "$FROMMAIL" -ne "" ]]; then
-            if [[ "$SMTPHOST" -ne "" ]]; then
+    if [ ! -z "$NOTIFYMAIL" ]; then
+        if [ ! -z "$FROMMAIL" ]; then
+            if [ ! -z "$SMTPHOST" ]; then
                 echo `date` 'Отправляю уведомление о выполненной работе на ' $NOTIFYMAIL ' через ' $SMTPHOST
                 NOTIFYMSG="Резервное копирование на сервере $BSERVERNAME выполнено в файл $BSERVERNAME-$BDATEFORMAT.tar.gz."
                 $SENDEMAILBIN -f $FROMMAIL -t $NOTIFYMAIL -u "Резервное копирование $BSERVERNAME" -m "$NOTIFYMSG" -s $SMTPHOST
