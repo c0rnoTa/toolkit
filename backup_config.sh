@@ -13,7 +13,7 @@ BSAMBAUSER=""
 BSAMBAPASS=""
 
 # Пути к директориям (через пробел), которые будем бэкапить
-BPATHS="/etc/nginx /var/www/"
+BPATHS=""
 
 # Пути к файлам (через пробел), которые будем бэкапить
 BFILES=""
@@ -21,6 +21,10 @@ BFILES=""
 # Параметры подключения к MySQL
 BMYSQLUSER=""
 BMYSQLPASSWORD=""
+
+# Параметры подключения к PostgreSQL
+BPSQLUSER="postgres"
+BPSQLDATABASE=""
 
 #################
 # НАЧАЛО БЭКАПА #
@@ -47,26 +51,29 @@ BTEMPDIR=/tmp/$BDATEFORMAT
 mkdir -p $BTEMPDIR
 cd $BTEMPDIR
 
-# Дамп директорий
-i=1
-for CURRDIR in $BPATHS; do
-	echo `date` 'Копирую директорию' $CURRDIR
-	echo "$i : $CURRDIR" >> paths.log
-	tar cf $BTEMPDIR/$BSERVERNAME-$i-$BDATEFORMAT.tar $CURRDIR --recursion
-	i=`expr $i + 1`
-done
+if [ "$BPATHS" -ne "" ]; then
+    # Дамп директорий
+    i=1
+    for CURRDIR in $BPATHS; do
+    	echo `date` 'Копирую директорию' $CURRDIR
+    	echo "$i : $CURRDIR" >> paths.log
+    	tar cf $BTEMPDIR/$BSERVERNAME-$i-$BDATEFORMAT.tar $CURRDIR --recursion
+    	i=`expr $i + 1`
+    done
+fi
 
-# Дамп файлов
-i=1
-for CURRFILE in $BFILES; do
-	echo `date` 'Копирую файл' $CURRFILE
-	echo "$i : $CURRFILE" >> paths.log
-	cp $CURRFILE $BTEMPDIR/
-	i=`expr $i + 1`
-done
+if [ "$BFILES" -ne "" ]; then
+    # Дамп файлов
+    i=1
+    for CURRFILE in $BFILES; do
+        echo `date` 'Копирую файл' $CURRFILE
+        echo "$i : $CURRFILE" >> paths.log
+        cp $CURRFILE $BTEMPDIR/
+        i=`expr $i + 1`
+    done
+fi
 
-
-# Дамп базы данных, если запущен MySQL
+# Дамп базы данных MySQL, если запущен сервис
 if [ -f /var/run/mysqld/mysqld.pid ]; then
 	echo `date` "Обнаружен PID файл MySQL. Сохраняем все базы данных."
 	DATABASESLIST=`echo 'SHOW DATABASES' | mysql -u$BMYSQLUSER -p$BMYSQLPASSWORD | egrep -v '(Database|information_schema|mysql|performance_schema|test)'`
@@ -77,6 +84,21 @@ if [ -f /var/run/mysqld/mysqld.pid ]; then
 		gzip -9 $BTEMPDIR/$BSERVERNAME-$DATABASE-$BDATEFORMAT.sql
 	done
 	echo `date` "Сохранение баз MySQL завершено."
+fi
+
+# Дамп базы данных PostgreSQL, если установлен pg_dump и указано имя базы
+PSQLDUMPBIN=`whereis pg_dump | awk '{print $2}'`
+if [ ! -f $PSQLDUMPBIN ]; then
+    echo `date` 'Обнаружен pg_dump. Сохраняем базы данных.'
+    if [ "$BPSQLDATABASE" -ne "" ]; then
+        for DATABASE in $BPSQLDATABASE; do
+            echo `date` 'Делаю дамп базы' $DATABASE
+            sudo -u postgres $PSQLDUMPBIN -f $BTEMPDIR/$BSERVERNAME-$DATABASE-$BDATEFORMAT.sql $DATABASE
+            echo `date` 'Сжимаю дамп базы' $DATABASE
+		    gzip -9 $BTEMPDIR/$BSERVERNAME-$DATABASE-$BDATEFORMAT.sql
+        done
+        echo `date` "Сохранение баз PostgreSQL завершено."
+    fi
 fi
 
 # Сжимаем конечный архив
@@ -114,3 +136,4 @@ echo `date` 'Работа завершена'
 
 # Возврат вывода всех сообщений
 exec 1>&3 2>&4
+exit
