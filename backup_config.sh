@@ -148,7 +148,7 @@ if [ -f $SENDEMAILBIN ]; then
             if [ ! -z "$SMTPHOST" ]; then
                 echo `date` 'Отправляю уведомление о выполненной работе на ' $NOTIFYMAIL ' через ' $SMTPHOST
                 NOTIFYMSG="Резервное копирование на сервере $BSERVERNAME выполнено в файл $BSERVERNAME-$BDATEFORMAT.tar.gz."
-                $SENDEMAILBIN -f $FROMMAIL -t $NOTIFYMAIL -u "Резервное копирование $BSERVERNAME" -m "$NOTIFYMSG" -s $SMTPHOST
+                $SENDEMAILBIN -o timeout=10 -f $FROMMAIL -t $NOTIFYMAIL -u "Резервное копирование $BSERVERNAME" -m "$NOTIFYMSG" -s $SMTPHOST
             else
                 echo `date` 'Уведомление о выполненной работе не отправлено. Не указан SMTP сервер.'
             fi
