@@ -26,6 +26,11 @@ BMYSQLPASSWORD=""
 BPSQLUSER="postgres"
 BPSQLDATABASE=""
 
+# Параметры отправки уведомления на e-mail
+FROMMAIL=""
+NOTIFYMAIL=""
+SMTPHOST=""
+
 #################
 # НАЧАЛО БЭКАПА #
 #################
@@ -134,6 +139,25 @@ EOC
     fi
 fi
 
+# Отправляем нотификацию о выполненной работе
+SENDEMAILBIN=`whereis sendEmail | awk '{print $2}'`
+if [ -f $SENDEMAILBIN ]; then
+    if [[ "$NOTIFYMAIL" -ne "" ]]; then
+        if [[ "$FROMMAIL" -ne "" ]]; then
+            if [[ "$SMTPHOST" -ne "" ]]; then
+                echo `date` 'Отправляю уведомление о выполненной работе на ' $NOTIFYMAIL ' через ' $SMTPHOST
+                NOTIFYMSG="Резервное копирование на сервере $BSERVERNAME выполнено в файл $BSERVERNAME-$BDATEFORMAT.tar.gz."
+                $SENDEMAILBIN -f $FROMMAIL -t $NOTIFYMAIL -u "Резервное копирование $BSERVERNAME" -m "$NOTIFYMSG" -s $SMTPHOST
+            else
+                echo `date` 'Уведомление о выполненной работе не отправлено. Не указан SMTP сервер.'
+            fi
+        else
+            echo `date` 'Уведомление о выполненной работе не отправлено. Не указан адрес отправителя.'
+        fi
+    else
+        echo `date` 'Уведомление о выполненной работе не отправлено. Не указан адрес получателя.'
+    fi
+fi
 
 
 echo `date` 'Работа завершена'
