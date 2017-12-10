@@ -54,6 +54,7 @@ fi
 # Создание временной директории с резервной копией
 BTEMPDIR=/tmp/$BDATEFORMAT
 mkdir -p $BTEMPDIR
+chmod 777 $BTEMPDIR
 cd $BTEMPDIR
 
 if [ ! -z "$BPATHS" ]; then
