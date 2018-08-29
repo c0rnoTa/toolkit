@@ -37,7 +37,7 @@ cd $BTEMPDIR
 
 if [ ! -z "$PATH_SOURCE" ]; then
     # Переносим файлы в tmp директорий
-    find $PATH_SOURCE -type f -mtime +$ROTATE_DAYS -exec mv {} $BTEMPDIR/ \;
+    find $PATH_SOURCE -type f -mtime +$ROTATE_DAYS -not -path "$PATH_DESTINATION/*" -exec mv {} $BTEMPDIR/ \;
 fi
 
 # Сжимаем конечный архив
