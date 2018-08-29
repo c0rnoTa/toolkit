@@ -37,7 +37,7 @@ cd $BTEMPDIR
 
 if [ ! -z "$PATH_SOURCE" ]; then
     # Переносим файлы в tmp директорий
-    find $PATH_SOURCE -type f -mtime +60 -exec mv {} $BTEMPDIR/ \;
+    find $PATH_SOURCE -type f -mtime +$ROTATE_DAYS -exec mv {} $BTEMPDIR/ \;
 fi
 
 # Сжимаем конечный архив
@@ -52,6 +52,8 @@ if [ "${DO_DELETE}" == "1" ]; then
         rm -rf /tmp/$BDATEFORMAT
     fi
 fi
+mv /tmp/$BDATEFORMAT/* $PATH_SOURCE/
+rmdir /tmp/$BDATEFORMAT
 
 echo `date` 'Работа завершена'
 exit
